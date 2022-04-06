@@ -4,10 +4,10 @@ header('Access-Control-Allow-Origin: '.$origin);
 header('Access-Control-Allow-Methods: POST, OPTIONS, GET, PUT');
 header('Access-Control-Allow-Credentials: true');
 
-include_once './lib/class.login.php';
+include_once './lib/class.acl.php';
 
-$Object = new Login();
-$EXPECTED = array('token','u_email','u_password');
+$Object = new ACL();
+$EXPECTED = array('token','u_id');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -21,9 +21,16 @@ foreach ($EXPECTED AS $key) {
 $isAuth = true;//$Object->basicAuth($token);
 
 if(!$isAuth){
-    $ret = array('response'=>array(),'acl'=>'','role'=>'','ERROR'=>'Authentication is failed');
+    $ret = array('login'=>array(),'ERROR'=>'Authentication is failed');
 }else{
-    $ret = $Object->loginEmailPass($u_email,$u_password);
+    $result = $Object->get_ACL(3); //$g_name,$role,$u_ids
+    //print_r($result); die();
+    if(is_numeric($result) && !empty($result)){
+        $ret = array('status'=>'SUCCESS','ERROR'=>'','acl'=>$result);
+
+    } else {
+        $ret = array('status'=>'FAIL','ERROR'=>$result,'acl'=>'');
+    }
 
 }
 $Object->close_conn();

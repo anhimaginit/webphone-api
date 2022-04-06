@@ -110,8 +110,11 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>true,"show_branch"=>true,
-                "show_company"=>true,"show_itg"=>true,"show_user"=>true);
+                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_branch"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_company"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_user"=>array("view"=>true,"add"=>true,"edit"=>true));
 
                 break;
             case "company_manager":
@@ -131,8 +134,11 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>true,"show_branch"=>true,
-                    "show_company"=>true,"show_itg"=>true,"show_user"=>true);
+                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_branch"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_company"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_user"=>array("view"=>true,"add"=>true,"edit"=>true));
 
                 break;
             case "branch_manager":
@@ -152,8 +158,11 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>true,"show_branch"=>true,
-                    "show_company"=>true,"show_itg"=>true,"show_user"=>true);
+                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_branch"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_company"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "show_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "show_user"=>array("view"=>true,"add"=>true,"edit"=>true));
 
                 break;
             default:
@@ -173,8 +182,11 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>true,"show_branch"=>true,
-                    "show_company"=>true,"show_itg"=>true,"show_user"=>true);
+                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "show_branch"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "show_company"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "show_itg"=>array("view"=>true,"false"=>true,"edit"=>false),
+                    "show_user"=>array("view"=>true,"add"=>false,"edit"=>true));
 
                 break;
         }
@@ -204,174 +216,124 @@ class ACL extends Common{
             return mysqli_error($this->con);
         }
 
-
-        return array("results"=>$list,"row_cnt"=>$row_cnt);
     }
 
-//----------------------------------------------------------
+    //----------------------------------------------------------
+    public function get_ACL($u_id){
+        $query ="select acl,g_role from groups
+        where JSON_SEARCH(u_id, 'all', '{$u_id}') IS NOT NULL";
+
+        $result = mysqli_query($this->con,$query);
+
+        $list = array(); $roles =array();
+        if($result){
+            while ($row = mysqli_fetch_assoc($result)) {
+                $list[] = json_decode($row["acl"],true);
+                $roles[] = $row["g_role"];
+            }
+        }
+
+        $role="user";
+        foreach ($roles as $k=>$v){
+            if($v=="super_admin"){
+                $role = "super_admin";
+                break;
+            }elseif($v=="company_manager"){
+                $role = "company_manager";
+            }elseif($v=="branch_manager"){
+                if($role !="company_manager"){
+                    $role = "branch_manager";
+                }
+            }
+        }
+
+        if(count($list)>1){
+            return array("acl"=>$this->processACL_again($list),"role"=>$role);
+        }elseif(count($list)==1){
+            return array("acl"=>$list[0],"role"=>$role);
+        }else{
+            $query ="select acl from groups
+            where g_role = 'user' and g_name='user'";
+
+            $result = mysqli_query($this->con,$query);
+
+            $list = array();
+            if($result){
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $list[] = json_decode($row["acl"],true);
+                }
+            }
+
+            if(count($list) >0){
+                return array("acl"=>$list[0],"role"=>$role);
+            }else{
+                return array("acl"=>$list,"role"=>$role);
+            }
+        }
+    }
+    //----------------------------------------------------------
     public function processACL_again($acl_temp){
         if(count($acl_temp)>1){
+            $acl = array();
             //acl
-            $temp1 = $acl_temp[0];
-            $assgn_itg_table_permission_0 = array();
-            if(isset($temp1['assgn_itg_table_permission'])){
-                $assgn_itg_table_permission_0 = $temp1['assgn_itg_table_permission'] ;
-            }
-            $branch_table_permission_0 =array();
-            if(isset($temp1['branch_table_permission'])){
-                $branch_table_permission_0 =$temp1['branch_table_permission'] ;
-            }
-            $company_table_permission_0 =array();
-            if(isset($temp1['company_table_permission'] )){
-                $company_table_permission_0 =$temp1['company_table_permission'] ;
-            }
-            $integration_table_permission_0 =array();
-            if(isset($temp1['integration_table_permission'])){
-                $integration_table_permission_0 =$temp1['integration_table_permission'] ;
-            }
-            $user_table_permission_0 =array();
-            if(isset($temp1['user_table_permission'])){
-                $user_table_permission_0 =$temp1['user_table_permission'] ;
-            }
-            $permission_0 =array();
-            if(isset($temp1['permission'])){
-                $permission_0 =$temp1['permission'];
-            }
-            //level
-            $level_0= $acl_temp[0]['level'] ;
-            $unit_0= $acl_temp[0]['unit'] ;
+            $temp_0 = $acl_temp[0];
+            //print_r($temp_0); die();
             for($i=1;$i<count($acl_temp);$i++){
-                $temp2 = $acl_temp[$i]['acl_rules'][0];
-                $level_0= $acl_temp[$i]['level'] ;
-                //process claim acl
-                $ClaimForm_i =array();
-                if(isset($temp2['ClaimForm'])){
-                    $ClaimForm_i =$temp2['ClaimForm'] ;
+                $diff = array_diff_key($acl_temp[$i],$temp_0);
+                if(count($diff) >0) {
+                    $temp_0 = array_merge($temp_0,$diff);
                 }
+            }
 
-                if(count($ClaimForm_0)>0 && count($ClaimForm_i)>0){
-                    $diff = array_diff_key($ClaimForm_i,$ClaimForm_0);
-                    if(count($diff) >0) {
-                        $ClaimForm_0 = array_merge($ClaimForm_0,$diff);
-                    }
+            foreach ($temp_0 as $t_key_0=>$t_value_0){
+                //print_r($t_key_0."---------");
+                for($i=1; $i<count($acl_temp);$i++){
+                    $t_value_i = $acl_temp[$i][$t_key_0];
+                    if(count($t_value_0)>0 && count($t_value_i)>0){
+                        $diff = array_diff_key($t_value_i,$t_value_0);
+                        if(count($diff) >0) {
+                            $t_value_0 = array_merge($t_value_0,$diff);
+                        }
 
-                    foreach($ClaimForm_0 as $k0=>$v0){
-                        //print_r($k0);echo "=";
-                        //print_r($ClaimForm_i[$k0]);echo "-----";
-                        foreach($v0 as $v0_k=>$v0_v){
-                            if($v0_k!="display"){
-                                if(isset($ClaimForm_i[$k0][$v0_k])){
-                                    $v0[$v0_k] = false || $ClaimForm_i[$k0][$v0_k];
+                        foreach($t_value_0 as $k0=>$v0){
+                            //print_r($k0);echo "=";
+                            //print_r($t_value_i[$k0]);echo "-----";
+                            foreach($v0 as $v0_k=>$v0_v){
+                                if(isset($t_value_i[$k0][$v0_k])){
+                                    $v0[$v0_k] = $t_value_0[$k0][$v0_k] || $t_value_i[$k0][$v0_k];
                                 }else{
-                                    $v0[$v0_k] = false;
+                                    $v0[$v0_k] = $t_value_0[$k0][$v0_k];
                                 }
                             }
+                            $t_value_0[$k0] = $v0;
                         }
-                        $ClaimForm_0[$k0] = $v0;
+                    }elseif(count($t_value_0) == 0 && count($t_value_i)>0){
+                        $t_value_0 = $t_value_i;
                     }
-                }else{
-                    $ClaimForm_0 = $ClaimForm_i;
+
                 }
+                $acl[$t_key_0] =$t_value_0;
 
-                //--
-            }
-
-            $rtn=  Array
-            (
-                Array
-                (
-                    'unit' => $unit_0,
-                    'level' => $level_0,
-                    'acl_rules' => Array
-                    (
-                        Array
-                        (
-                            'ClaimForm' => $ClaimForm_0,
-                            'OrderForm' => $OrderForm_0,
-                            'ContactForm' => $ContactForm_0,
-                            'InvoiceForm' => $InvoiceForm_0,
-                            'ProductForm' => $ProductForm_0,
-                            'WarrantyForm' => $WarrantyForm_0,
-                            'Dashboard' => $Dashboard_0,
-                            'GroupForm' => $GroupForm_0,
-                            'Navigation'=>$Navigation_0,
-                            'CompanyForm'=>$CompanyForm_0,
-                            'BillingTemplateForm'=>$BillingTemplateForm_0,
-                            'DiscountForm'=>$DiscountForm_0,
-                            'SettingForm'=>$SettingForm_0,
-                            'PermissionForm'=>$PermissionForm_0,
-                            'TaskForm'=>$TaskForm_0,
-                            'ControlListForm'=>$ControlListForm_0
-                        )
-                    ),
-                    'group_name' => ''
-                )
-            );
-
-            if(count($ClaimForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['ClaimForm']);
             }
 
-            if(count($OrderForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['OrderForm']);
-            }
-
-            if(count($ContactForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['ContactForm']);
-            }
-
-            if(count($InvoiceForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['InvoiceForm']);
-            }
-
-            if(count($ProductForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['ProductForm']);
-            }
-
-            if(count($WarrantyForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['WarrantyForm']);
-            }
-
-            if(count($CompanyForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['CompanyForm']);
-            }
-
-            if(count($Dashboard_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['Dashboard']);
-            }
-
-            if(count($GroupForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['GroupForm']);
-            }
-
-            if(count($Navigation_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['Navigation']);
-            }
-
-            if(count($BillingTemplateForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['BillingTemplateForm']);
-            }
-            if(count($DiscountForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['DiscountForm']);
-            }
-            if(count($SettingForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['SettingForm']);
-            }
-            if(count($PermissionForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['PermissionForm']);
-            }
-
-            if(count($TaskForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['TaskForm']);
-            }
-            if(count($ControlListForm_0)<1) {
-                unset($rtn[0]['acl_rules'][0]['ControlListForm']);
-            }
-            return $rtn;
-
-        }else{
-            return array();
+            return $acl;
+           //print_r($acl); die();
         }
+    }
+
+    //----------------------------------------------------------
+    public function roles(){
+        $query ="select * from roles";
+
+        $result = mysqli_query($this->con,$query);
+        $list = array();
+        if($result){
+            while ($row = mysqli_fetch_assoc($result)) {
+                $list[] = $row;
+            }
+        }
+
+        return $list;
     }
 
   //////////////////////////////

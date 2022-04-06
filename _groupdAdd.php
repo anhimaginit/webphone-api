@@ -23,7 +23,7 @@ $isAuth = true;//$Object->basicAuth($token);
 if(!$isAuth){
     $ret = array('login'=>array(),'ERROR'=>'Authentication is failed');
 }else{
-    $result = $Object->create_acl($g_name,$role,$u_ids); //
+    $result = $Object->create_acl("user3","user"); //$g_name,$role,$u_ids
     if(is_numeric($result) && !empty($result)){
         $ret = array('status'=>'SUCCESS','ERROR'=>'','g_id'=>$result);
 

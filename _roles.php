@@ -4,10 +4,10 @@ header('Access-Control-Allow-Origin: '.$origin);
 header('Access-Control-Allow-Methods: POST, OPTIONS, GET, PUT');
 header('Access-Control-Allow-Credentials: true');
 
-include_once './lib/class.login.php';
+include_once './lib/class.acl.php';
 
-$Object = new Login();
-$EXPECTED = array('token','u_email','u_password');
+$Object = new ACL();
+$EXPECTED = array('token','u_name');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -18,12 +18,14 @@ foreach ($EXPECTED AS $key) {
 }
 //die();
 //--- validate
-$isAuth = true;//$Object->basicAuth($token);
+$isAuth = $Object->basicAuth($token);
 
 if(!$isAuth){
-    $ret = array('response'=>array(),'acl'=>'','role'=>'','ERROR'=>'Authentication is failed');
+    $ret = array('response'=>array(),'ERROR'=>'Authentication is failed');
 }else{
-    $ret = $Object->loginEmailPass($u_email,$u_password);
+    $result = $Object->roles();
+
+    $ret = array('response'=>$result,'ERROR'=>'');
 
 }
 $Object->close_conn();
