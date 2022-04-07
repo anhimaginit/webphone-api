@@ -84,7 +84,7 @@ class ACL extends Common{
     }
 
     //-----------------------------------------------------------
-    public function create_acl($g_name,$role,$u_ids=null){
+    public function create_group_default($g_id,$g_name,$g_role,$u_id=null,$u_name=null){
         $table = $this->getFieldsTable();
         $assgn_itg =array();
         $branch =array();
@@ -92,7 +92,7 @@ class ACL extends Common{
         $integration =array();
         $user =array();
         $permission_table = array();
-        switch ($role){
+        switch ($g_role){
             case "super_admin":
                 foreach($table["assgn_itg_table"] as $key =>$v){
                     $assgn_itg[$v] = array("view"=>true,"add"=>true,"edit"=>true);
@@ -199,22 +199,47 @@ class ACL extends Common{
             "permission"=>$permission_table);
 
         $data = json_encode($data);
-        $u_ids = explode(",",$u_ids);
-        $u_ids = json_encode($u_ids);
+        $u_id = explode(",",$u_id);
+        $u_id = json_encode($u_id);
 
-        $fields="g_name,g_role,u_id, acl";
-        $values ="'{$g_name}','{$role}','{$u_ids}','{$data}'";
+        if($g_id==""){
+            $fields="g_name,g_role,u_id,u_name,acl";
+            $values ="'{$g_name}','{$g_role}','{$u_id}','{$u_name}','{$data}'";
 
-        $insert = "INSERT INTO groups({$fields}) VALUES({$values})";
-       // print_r($insert); die();
+            $insert = "INSERT INTO groups({$fields}) VALUES({$values})";
 
-        mysqli_query($this->con,$insert);
-        $g_id = mysqli_insert_id($this->con);
-        if(is_numeric($g_id) && !empty($g_id)){
-            return $g_id;
+            mysqli_query($this->con,$insert);
+            $g_id_new = mysqli_insert_id($this->con);
+
+            if(is_numeric($g_id_new) && !empty($g_id_new)){
+                return array("Save"=>true,"ERROR"=>"","g_id"=>$g_id_new);
+            }else{
+                return array("Save"=>false,"ERROR"=>mysqli_error($this->con),"g_id"=>"");
+            }
         }else{
-            return mysqli_error($this->con);
+            $updateCommand = "UPDATE `groups`
+                SET g_name = '{$g_name}',
+                 u_id = '{$u_id}',
+                 u_name = '{$u_name}'";
+
+            $g_role_old = $this->return_id("Select * from groups where `g_id` ='{$g_id}' AND g_id<>'' limit 1",'g_role');
+            if($g_role !=$g_role_old){
+                $updateCommand =$updateCommand.",g_role = '{$g_role}'".",
+                 acl = '{$data}'";
+            }
+
+            $updateCommand =$updateCommand." where g_id = '{$g_id}'";
+
+            $update = mysqli_query($this->con,$updateCommand);
+
+            if($update){
+                return array("Update"=>true,"ERROR"=>"");
+            }else{
+                return array("Update"=>false,"ERROR"=>mysqli_error($this->con));
+            }
         }
+
+
 
     }
 
@@ -253,7 +278,7 @@ class ACL extends Common{
             return array("acl"=>$list[0],"role"=>$role);
         }else{
             $query ="select acl from groups
-            where g_role = 'user' and g_name='user'";
+            where g_role = 'user' and g_name='user_default'";
 
             $result = mysqli_query($this->con,$query);
 
@@ -335,6 +360,48 @@ class ACL extends Common{
 
         return $list;
     }
+
+    //----------------------------------------------------------
+    public function groups($limit,$offset,$g_name,$member){
+        $query = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
+
+        $query_count = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
+
+        if($g_name !=''){
+            $query .= " and g_name like '%{$g_name}%'";
+            $query_count .= " and g_name like '%{$g_name}%'";
+
+
+        }
+
+        if($member !=''){
+            $query .= " anb u_name like '%{$member}%'";
+            $query_count .= " and u_name like '%{$member}%'";
+        }
+
+        $query .= " order by g_id DESC";
+        if($limit !=''){
+            $query.= " LIMIT {$limit} ";
+        }
+        if($offset !=''){
+            $query.= " OFFSET {$offset} ";
+        }
+
+        $result = mysqli_query($this->con,$query);
+
+        $list = array();
+        if($result){
+            while ($row = mysqli_fetch_assoc($result)) {
+                $list[] = $row;
+            }
+        }
+
+        $result = mysqli_query($this->con,$query_count);
+        //die($query);
+        $row_cnt = mysqli_num_rows($result);
+
+        return array("results"=>$list,"row_cnt"=>$row_cnt);
+   }
 
   //////////////////////////////
 }

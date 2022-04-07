@@ -4,9 +4,10 @@ header('Access-Control-Allow-Origin: '.$origin);
 header('Access-Control-Allow-Methods: POST, OPTIONS, GET, PUT');
 header('Access-Control-Allow-Credentials: true');
 
-include_once './lib/class.user.php';
-$Object = new User();
-$EXPECTED = array('auth','u_name');
+include_once './lib/class.acl.php';
+
+$Object = new ACL();
+$EXPECTED = array('auth','limit','offset','g_name','member');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -15,14 +16,14 @@ foreach ($EXPECTED AS $key) {
         ${$key} = NULL;
     }
 }
-
+//die();
 //--- validate
 $isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
     $ret = array('response'=>array(),'ERROR'=>'Authentication is failed');
 }else{
-    $result = $Object->search_users($u_name);
+    $result = $Object->groups($limit,$offset,$g_name,$member);
 
     $ret = array('response'=>$result,'ERROR'=>'');
 

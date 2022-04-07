@@ -7,7 +7,7 @@ header('Access-Control-Allow-Credentials: true');
 include_once 'class.curl.php';
 
 $Object = new ClassCurl();
-$EXPECTED = array('token','Appt_UniqueID','Completeby_UniqueID','Facility_UniqueID','Notes',
+$EXPECTED = array('auth','Appt_UniqueID','Completeby_UniqueID','Facility_UniqueID','Notes',
     'Orderby_UniqueID','Patient_UniqueID','Results','Signature_URL','Status','CompletedDate','UniqueID');
 /*
 $EXPECTED = array('token','Appoinment','CompletedBy','Facility','Notes',
