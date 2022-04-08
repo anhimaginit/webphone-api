@@ -110,11 +110,11 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_branch"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_company"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_user"=>array("view"=>true,"add"=>true,"edit"=>true));
+                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Branch"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Company"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "User"=>array("view"=>true,"add"=>true,"edit"=>true));
 
                 break;
             case "company_manager":
@@ -134,11 +134,11 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_branch"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_company"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_user"=>array("view"=>true,"add"=>true,"edit"=>true));
+                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Branch"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Company"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "User"=>array("view"=>true,"add"=>true,"edit"=>true));
 
                 break;
             case "branch_manager":
@@ -158,12 +158,11 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_branch"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_company"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "show_itg"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "show_user"=>array("view"=>true,"add"=>true,"edit"=>true));
-
+                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Branch"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "Company"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
+                    "User"=>array("view"=>true,"add"=>true,"edit"=>true));
                 break;
             default:
                 foreach($table["assgn_itg_table"] as $key =>$v){
@@ -182,21 +181,22 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("show_asg_itg"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "show_branch"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "show_company"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "show_itg"=>array("view"=>true,"false"=>true,"edit"=>false),
-                    "show_user"=>array("view"=>true,"add"=>false,"edit"=>true));
+                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "Branch"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "Company"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "Integration"=>array("view"=>true,"add"=>false,"edit"=>false),
+                    "User"=>array("view"=>true,"add"=>false,"edit"=>true));
 
                 break;
         }
 
-        $data = array("assgn_itg_table_permission"=>$assgn_itg,
-            "branch_table_permission"=>$branch,
-            "company_table_permission"=>$company,
-            "integration_table_permission"=>$integration,
-            "user_table_permission"=>$user,
-            "permission"=>$permission_table);
+        $data = array(
+            "Permission"=>$permission_table,
+            "Assigned_Integration"=>$assgn_itg,
+            "Branch"=>$branch,
+            "Company"=>$company,
+            "Integration"=>$integration,
+            "User"=>$user);
 
         $data = json_encode($data);
         $u_id = explode(",",$u_id);
@@ -362,7 +362,7 @@ class ACL extends Common{
     }
 
     //----------------------------------------------------------
-    public function groups($limit,$offset,$g_name,$member){
+    public function groups($g_id,$limit,$offset,$g_name,$member){
         $query = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
 
         $query_count = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
@@ -370,13 +370,16 @@ class ACL extends Common{
         if($g_name !=''){
             $query .= " and g_name like '%{$g_name}%'";
             $query_count .= " and g_name like '%{$g_name}%'";
-
-
         }
 
         if($member !=''){
-            $query .= " anb u_name like '%{$member}%'";
+            $query .= " and u_name like '%{$member}%'";
             $query_count .= " and u_name like '%{$member}%'";
+        }
+
+        if($g_id !=''){
+            $query .= " and g_id = '{$g_id}'";
+            $query_count .= " and g_id = '{$g_id}'";
         }
 
         $query .= " order by g_id DESC";
@@ -386,12 +389,13 @@ class ACL extends Common{
         if($offset !=''){
             $query.= " OFFSET {$offset} ";
         }
-
+        //print_r($query); die();
         $result = mysqli_query($this->con,$query);
 
         $list = array();
         if($result){
             while ($row = mysqli_fetch_assoc($result)) {
+                $row['acl'] = json_decode($row['acl']);
                 $list[] = $row;
             }
         }
@@ -403,5 +407,36 @@ class ACL extends Common{
         return array("results"=>$list,"row_cnt"=>$row_cnt);
    }
 
+    //----------------------------------------------------------
+    public function deleteGroup_gID($g_id){
+        $query ="delete from groups where g_id = '{$g_id}'";
+        $delete = mysqli_query($this->con,$query);
+        if($delete){
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    //----------------------------------------------------------
+    public function groupsByRole($g_role,$g_name=null){
+        $query ="select * from groups where g_role = '{$g_role}' and g_name <> 'super_admin' and g_name <> 'user_default'";
+
+        if($g_name !=""){
+            $query .= " and g_name like '%{$g_name}%'";
+        }
+        //die($query);
+        $result = mysqli_query($this->con,$query);
+
+        $list = array();
+        if($result){
+            while ($row = mysqli_fetch_assoc($result)) {
+                $list[] = $row;
+            }
+        }
+
+        return $list;
+    }
   //////////////////////////////
 }

@@ -7,7 +7,7 @@ header('Access-Control-Allow-Credentials: true');
 include_once './lib/class.login.php';
 
 $Object = new Login();
-$EXPECTED = array('token','u_email','u_password');
+$EXPECTED = array('auth','u_email','u_password');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -18,7 +18,7 @@ foreach ($EXPECTED AS $key) {
 }
 //die();
 //--- validate
-$isAuth = true;//$Object->basicAuth($token);
+$isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
     $ret = array('response'=>array(),'acl'=>'','role'=>'','ERROR'=>'Authentication is failed');

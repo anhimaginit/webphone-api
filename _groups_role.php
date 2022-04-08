@@ -4,10 +4,10 @@ header('Access-Control-Allow-Origin: '.$origin);
 header('Access-Control-Allow-Methods: POST, OPTIONS, GET, PUT');
 header('Access-Control-Allow-Credentials: true');
 
-include_once './lib/class.company.php';
+include_once './lib/class.acl.php';
 
-$Object = new Company();
-$EXPECTED = array('auth','u_id');
+$Object = new ACL();
+$EXPECTED = array('auth','g_role','g_name');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -21,9 +21,10 @@ foreach ($EXPECTED AS $key) {
 $isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
-    $ret = array('login'=>array(),'ERROR'=>'Authentication is failed');
+    $ret = array('response'=>array(),'ERROR'=>'Authentication is failed');
 }else{
-    $result = $Object->branch_uid($u_id);
+    $result = $Object->groupsByRole($g_role,$g_name);
+
     $ret = array('response'=>$result,'ERROR'=>'');
 
 }

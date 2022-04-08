@@ -4,10 +4,10 @@ header('Access-Control-Allow-Origin: '.$origin);
 header('Access-Control-Allow-Methods: POST, OPTIONS, GET, PUT');
 header('Access-Control-Allow-Credentials: true');
 
-include_once './lib/class.company.php';
+include_once './lib/class.acl.php';
 
-$Object = new Company();
-$EXPECTED = array('auth','u_id');
+$Object = new ACL();
+$EXPECTED = array('auth','g_id');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -21,10 +21,11 @@ foreach ($EXPECTED AS $key) {
 $isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
-    $ret = array('login'=>array(),'ERROR'=>'Authentication is failed');
+    $ret = array('delete'=>false,'ERROR'=>'Authentication is failed');
 }else{
-    $result = $Object->branch_uid($u_id);
-    $ret = array('response'=>$result,'ERROR'=>'');
+    $result = $Object->deleteGroup_gID($g_id);
+
+    $ret = array('delete'=>$result);
 
 }
 $Object->close_conn();

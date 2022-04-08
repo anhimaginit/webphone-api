@@ -7,7 +7,7 @@ header('Access-Control-Allow-Credentials: true');
 include_once './lib/class.acl.php';
 
 $Object = new ACL();
-$EXPECTED = array('token','u_name');
+$EXPECTED = array('auth','u_name');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -18,7 +18,7 @@ foreach ($EXPECTED AS $key) {
 }
 //die();
 //--- validate
-$isAuth = $Object->basicAuth($token);
+$isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
     $ret = array('response'=>array(),'ERROR'=>'Authentication is failed');

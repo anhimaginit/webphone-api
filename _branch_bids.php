@@ -7,7 +7,7 @@ header('Access-Control-Allow-Credentials: true');
 include_once './lib/class.company.php';
 
 $Object = new Company();
-$EXPECTED = array('token','b_ids');
+$EXPECTED = array('auth','b_ids');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -18,7 +18,7 @@ foreach ($EXPECTED AS $key) {
 }
 //die();
 //--- validate
-$isAuth = true;//$Object->basicAuth($token);
+$isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
     $ret = array('login'=>array(),'ERROR'=>'Authentication is failed');

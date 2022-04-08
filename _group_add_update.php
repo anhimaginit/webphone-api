@@ -18,12 +18,20 @@ foreach ($EXPECTED AS $key) {
 }
 //die();
 //--- validate
+
 $isAuth = true;//$Object->basicAuth($auth);
 
 if(!$isAuth){
     $ret = array('ERROR'=>'Authentication is failed');
 }else{
-    $ret = $Object->create_group_default($g_id,$g_name,$g_role,$u_id,$u_name);
+    $g_role ="user";$g_name="user_default";//$u_id=1;$u_name="Brandon";
+    //print_r($g_role); die();
+    if($g_role =="super_admin" || $g_role =="company_manager" || $g_role =="branch_manager" || $g_role =="user"){
+
+        $ret = $Object->create_group_default($g_id,$g_name,$g_role,$u_id,$u_name);
+    }else{
+        return array("Save"=>false,"ERROR"=>"Role is not available","g_id"=>"");
+    }
 }
 $Object->close_conn();
 echo json_encode($ret);
