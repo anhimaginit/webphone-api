@@ -4,10 +4,10 @@ header('Access-Control-Allow-Origin: '.$origin);
 header('Access-Control-Allow-Methods: POST, OPTIONS, GET, PUT');
 header('Access-Control-Allow-Credentials: true');
 
-include_once './lib/class.login.php';
+include_once './lib/class.acl.php';
 
-$Object = new Login();
-$EXPECTED = array('auth','u_email','u_password');
+$Object = new ACL();
+$EXPECTED = array('auth','g_id','u_id');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -16,16 +16,27 @@ foreach ($EXPECTED AS $key) {
         ${$key} = NULL;
     }
 }
-//die();
+
 //--- validate
 $isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
-    $ret = array('response'=>array(),'acl'=>'','role'=>'','ERROR'=>'Authentication is failed');
+    $ret = array('Update'=>'','ERROR'=>'Authentication is failed');
 }else{
-    //$u_email = "anh@at1ts.com";$u_password="123";
-    $ret = $Object->loginEmailPass($u_email,$u_password);
-    //print_r($ret['acl']);
+    $acl =$_POST['acl'];
+
+    /*$view =$acl['Permission']['Assigned_Integration']['view'];
+
+    if($view == ""){
+        print_r("toi o day");
+    }
+
+    if($view === "false"){
+        print_r("toi khong toi");
+    }
+    die();*/
+    $ret = $Object->updateACL($g_id,$u_id,$acl);
+
 }
 $Object->close_conn();
 echo json_encode($ret);

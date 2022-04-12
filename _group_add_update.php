@@ -24,7 +24,7 @@ $isAuth = true;//$Object->basicAuth($auth);
 if(!$isAuth){
     $ret = array('ERROR'=>'Authentication is failed');
 }else{
-    $g_role ="user";$g_name="user_default";//$u_id=1;$u_name="Brandon";
+    //$g_role ="user";$g_name="user_default";//$u_id=1;$u_name="Brandon";
     //print_r($g_role); die();
     if($g_role =="super_admin" || $g_role =="company_manager" || $g_role =="branch_manager" || $g_role =="user"){
 

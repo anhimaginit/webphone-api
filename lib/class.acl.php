@@ -110,11 +110,13 @@ class ACL extends Common{
                     $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
                 }
 
-                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
+                $permission_table = array(
+                    "Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
                     "Branch"=>array("view"=>true,"add"=>true,"edit"=>true),
                     "Company"=>array("view"=>true,"add"=>true,"edit"=>true),
                     "Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "User"=>array("view"=>true,"add"=>true,"edit"=>true));
+                    "User"=>array("view"=>true,"add"=>true,"edit"=>true)
+                );
 
                 break;
             case "company_manager":
@@ -197,6 +199,8 @@ class ACL extends Common{
             "Company"=>$company,
             "Integration"=>$integration,
             "User"=>$user);
+
+        //print_r($data); die();
 
         $data = json_encode($data);
         $u_id = explode(",",$u_id);
@@ -345,7 +349,72 @@ class ACL extends Common{
            //print_r($acl); die();
         }
     }
+    //----------------------------------------------------------
+    public function updateACL($g_id,$u_id,$acl_update){
+       $rsl = $this->get_ACL($u_id);
+       $acl_permission = $rsl['acl'];
+       $rsl =$this->groups($g_id);
+       $acl_grp = $rsl['results'][0]['acl'];
+       //print_r($acl_grp); die();
+        //check fields were permited
+        $acl = array();
 
+        foreach ($acl_update as $t_key_0=>$t_value_0){
+            //print_r($t_key_0."---------");
+            $t_value_i = $acl_permission[$t_key_0];
+            if(count($t_value_0)>0 && count($t_value_i)>0){
+                $diff = array_diff_key($t_value_i,$t_value_0);
+                if(count($diff) >0) {
+                    $t_value_0 = array_merge($t_value_0,$diff);
+                }
+
+                foreach($t_value_0 as $k0=>$v0){
+                    //print_r($k0);echo "=";
+                    //print_r($t_value_i[$k0]);echo "-----";
+                    foreach($v0 as $v0_k=>$v0_v){
+                        if($v0_v==="true"){
+                            $v0[$v0_k] = true;
+                        }elseif($v0_v==="false"){
+                            $v0[$v0_k] = false;
+                        }
+                        if(isset($t_value_i[$k0][$v0_k])){
+                            if($t_value_i[$k0][$v0_k]==""){
+                                if(isset($acl_grp[$t_key_0][$k0][$v0_k])){
+                                    $v0[$v0_k] = $acl_grp[$t_key_0][$k0][$v0_k];
+                                }else{
+                                    $v0[$v0_k] = false;
+                                }
+
+                            }
+
+                        }
+                    }
+                    $t_value_0[$k0] = $v0;
+                }
+            }elseif(count($t_value_0) == 0 && count($t_value_i)>0){
+                $t_value_0 = $t_value_i;
+            }
+
+            $acl[$t_key_0] =$t_value_0;
+
+        }
+
+        //print_r($acl); die();
+        $acl = json_encode($acl);
+
+        $update ="update `groups`
+                  SET  acl = '{$acl}'
+                 where g_id = '{$g_id}'";
+
+        $update = mysqli_query($this->con,$update);
+
+        if($update){
+            return array("Update"=>true,"ERROR"=>"");
+        }else{
+            return array("Update"=>false,"ERROR"=>mysqli_error($this->con));
+        }
+
+    }
     //----------------------------------------------------------
     public function roles(){
         $query ="select * from roles";
@@ -362,7 +431,7 @@ class ACL extends Common{
     }
 
     //----------------------------------------------------------
-    public function groups($g_id,$limit,$offset,$g_name,$member){
+    public function groups($g_id=null,$limit=null,$offset=null,$g_name=null,$member=null){
         $query = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
 
         $query_count = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
@@ -395,7 +464,7 @@ class ACL extends Common{
         $list = array();
         if($result){
             while ($row = mysqli_fetch_assoc($result)) {
-                $row['acl'] = json_decode($row['acl']);
+                $row['acl'] = json_decode($row['acl'],true);
                 $list[] = $row;
             }
         }
