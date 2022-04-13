@@ -7,7 +7,7 @@ header('Access-Control-Allow-Credentials: true');
 include_once './lib/class.acl.php';
 
 $Object = new ACL();
-$EXPECTED = array('auth','g_role','g_name','all');
+$EXPECTED = array('auth','g_id');
 
 foreach ($EXPECTED AS $key) {
     if (!empty($_POST[$key])){
@@ -23,7 +23,7 @@ $isAuth = $Object->basicAuth($auth);
 if(!$isAuth){
     $ret = array('response'=>array(),'ERROR'=>'Authentication is failed');
 }else{
-    $result = $Object->groupsByRole($g_role,$g_name,$all);
+    $result = $Object->getGrp_gID($g_id);
 
     $ret = array('response'=>$result,'ERROR'=>'');
 

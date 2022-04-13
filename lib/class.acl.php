@@ -6,6 +6,41 @@ require_once 'class.common.php';
 
 class ACL extends Common{
     public function getFieldsTable(){
+        $query = "SELECT table_name
+        FROM information_schema.tables
+        WHERE table_type='BASE TABLE'
+        AND table_schema='dblnef5hfuazae' and table_name <> 'call_log' and table_name <> 'roles'";
+
+        $result = mysqli_query($this->con,$query);
+
+        $tables = array();
+        if($result){
+            while ($row = mysqli_fetch_assoc($result)) {
+                $tables[] = $row['table_name'];
+            }
+        }
+        //print_r($tables); die();
+        $all_tables_fields =array();
+
+        foreach($tables as $item){
+            $query = "SELECT `COLUMN_NAME`
+                  FROM `INFORMATION_SCHEMA`.`COLUMNS`
+                  WHERE `TABLE_SCHEMA`='dblnef5hfuazae'
+                  AND `TABLE_NAME`= '{$item}'";
+            $result = mysqli_query($this->con,$query);
+
+            $fileds = array();
+            if($result){
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $fileds[] = $row['COLUMN_NAME'];
+                }
+            }
+
+            $all_tables_fields[$item] = $fileds;
+
+        }
+
+        /*
         $user_table = "SELECT `COLUMN_NAME`
                   FROM `INFORMATION_SCHEMA`.`COLUMNS`
                   WHERE `TABLE_SCHEMA`='dblnef5hfuazae'
@@ -80,7 +115,9 @@ class ACL extends Common{
         "branch_table"=>$branch_fileds,
         "company_table"=>$company_fileds,
         "integration_table"=>$integration_fileds,
-        "user_table"=>$user_fileds);
+        "user_table"=>$user_fileds);*/
+
+        return array("tables"=>$tables,"table_field"=>$all_tables_fields) ;
     }
 
     //-----------------------------------------------------------
@@ -91,116 +128,84 @@ class ACL extends Common{
         $company =array();
         $integration =array();
         $user =array();
-        $permission_table = array();
+        $permission_table=array();
+        $data = array();
+        $data['permission']="";
+
+        //print_r($table['tables']); die();
         switch ($g_role){
             case "super_admin":
-                foreach($table["assgn_itg_table"] as $key =>$v){
-                    $assgn_itg[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["branch_table"] as $key =>$v){
-                    $branch[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["company_table"] as $key =>$v){
-                    $company[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["integration_table"] as $key =>$v){
-                    $integration[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["user_table"] as $key =>$v){
-                    $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
+                foreach($table['tables'] as $it){
+                    $permission_table[$it] =array("view"=>true,"add"=>true,"edit"=>true);
+                    $it_arr = array();
+                    foreach($table["table_field"][$it] as $key =>$v){
+                        $it_arr[$v] = array("view"=>true,"add"=>true,"edit"=>true);
+                    }
 
-                $permission_table = array(
-                    "Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Branch"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Company"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "User"=>array("view"=>true,"add"=>true,"edit"=>true)
-                );
+                    $data[$it]=$it_arr;
+                }
 
                 break;
             case "company_manager":
-                foreach($table["assgn_itg_table"] as $key =>$v){
-                    $assgn_itg[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["branch_table"] as $key =>$v){
-                    $branch[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["company_table"] as $key =>$v){
-                    $company[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["integration_table"] as $key =>$v){
-                    $integration[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["user_table"] as $key =>$v){
-                    $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
+                foreach($table['tables'] as $it){
+                    $permission_table[$it] =array("view"=>true,"add"=>true,"edit"=>true);
+                    $it_arr = array();
+                    foreach($table["table_field"][$it] as $key =>$v){
+                        $it_arr[$v] = array("view"=>true,"add"=>true,"edit"=>true);
+                    }
 
-                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Branch"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Company"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "User"=>array("view"=>true,"add"=>true,"edit"=>true));
-
+                    $data[$it]=$it_arr;
+                }
                 break;
             case "branch_manager":
-                foreach($table["assgn_itg_table"] as $key =>$v){
-                    $assgn_itg[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["branch_table"] as $key =>$v){
-                    $branch[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["company_table"] as $key =>$v){
-                    $company[$v] = array("view"=>true,"add"=>false,"edit"=>false);
-                }
-                foreach($table["integration_table"] as $key =>$v){
-                    $integration[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
-                foreach($table["user_table"] as $key =>$v){
-                    $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
+                foreach($table['tables'] as $it){
+                    if($it !="company"){
+                        $permission_table[$it] =array("view"=>true,"add"=>true,"edit"=>true);
+                    }else{
+                        $permission_table[$it] =array("view"=>true,"add"=>false,"edit"=>false);
+                    }
+
+                    $it_arr = array();
+                    foreach($table["table_field"][$it] as $key =>$v){
+                        if($it !="company"){
+                            $it_arr[$v] = array("view"=>true,"add"=>true,"edit"=>true);
+                        }else{
+                            $it_arr[$v] = array("view"=>true,"add"=>false,"edit"=>false);
+                        }
+
+                    }
+
+                    $data[$it]=$it_arr;
                 }
 
-                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Branch"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "Company"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "Integration"=>array("view"=>true,"add"=>true,"edit"=>true),
-                    "User"=>array("view"=>true,"add"=>true,"edit"=>true));
                 break;
             default:
-                foreach($table["assgn_itg_table"] as $key =>$v){
-                    $assgn_itg[$v] = array("view"=>true,"add"=>false,"edit"=>false);
-                }
-                foreach($table["branch_table"] as $key =>$v){
-                    $branch[$v] = array("view"=>true,"add"=>false,"edit"=>false);
-                }
-                foreach($table["company_table"] as $key =>$v){
-                    $company[$v] = array("view"=>false,"add"=>false,"edit"=>false);
-                }
-                foreach($table["integration_table"] as $key =>$v){
-                    $integration[$v] = array("view"=>true,"add"=>false,"edit"=>false);
-                }
-                foreach($table["user_table"] as $key =>$v){
-                    $user[$v] = array("view"=>true,"add"=>true,"edit"=>true);
-                }
+                foreach($table['tables'] as $it){
+                    if($it !="user"){
+                        $permission_table[$it] =array("view"=>true,"add"=>false,"edit"=>false);
+                    }else{
+                        $permission_table[$it] =array("view"=>true,"add"=>true,"edit"=>true);
+                    }
 
-                $permission_table = array("Assigned_Integration"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "Branch"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "Company"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "Integration"=>array("view"=>true,"add"=>false,"edit"=>false),
-                    "User"=>array("view"=>true,"add"=>false,"edit"=>true));
+                    $it_arr = array();
+                    foreach($table["table_field"][$it] as $key =>$v){
+                        if($it !="user"){
+                            $it_arr[$v] = array("view"=>true,"add"=>false,"edit"=>false);
+                        }else{
+                            $it_arr[$v] = array("view"=>true,"add"=>true,"edit"=>true);
+                        }
+
+                    }
+
+                    $data[$it]=$it_arr;
+                }
 
                 break;
         }
 
-        $data = array(
-            "Permission"=>$permission_table,
-            "Assigned_Integration"=>$assgn_itg,
-            "Branch"=>$branch,
-            "Company"=>$company,
-            "Integration"=>$integration,
-            "User"=>$user);
+        $data['permission']=$permission_table;
 
-        //print_r($data); die();
+       // print_r($data); die();
 
         $data = json_encode($data);
         $u_id = explode(",",$u_id);
@@ -353,50 +358,72 @@ class ACL extends Common{
     public function updateACL($g_id,$u_id,$acl_update){
        $rsl = $this->get_ACL($u_id);
        $acl_permission = $rsl['acl'];
-       $rsl =$this->groups($g_id);
-       $acl_grp = $rsl['results'][0]['acl'];
-       //print_r($acl_grp); die();
+        //groups($g_id,"","","","",1);
+       $rsl =$this->groups($g_id,"","","","",1);
+        //print_r($rsl); die();
+        $acl_grp =array();
+        if(count($rsl['results']) >0) $acl_grp = $rsl['results'][0]['acl'];
+
         //check fields were permited
         $acl = array();
 
         foreach ($acl_update as $t_key_0=>$t_value_0){
             //print_r($t_key_0."---------");
-            $t_value_i = $acl_permission[$t_key_0];
-            if(count($t_value_0)>0 && count($t_value_i)>0){
-                $diff = array_diff_key($t_value_i,$t_value_0);
-                if(count($diff) >0) {
-                    $t_value_0 = array_merge($t_value_0,$diff);
-                }
+            if(isset($acl_permission[$t_key_0])){
+                $t_value_i = $acl_permission[$t_key_0];
+                if(count($t_value_0)>0 && count($t_value_i)>0){
+                    /*$diff = array_diff_key($t_value_i,$t_value_0);
+                    if(count($diff) >0) {
+                        $t_value_0 = array_merge($t_value_0,$diff);
+                    }*/
 
+                    foreach($t_value_0 as $k0=>$v0){
+                        //print_r($k0);echo "=";
+                        //print_r($t_value_i[$k0]);echo "-----";
+                        foreach($v0 as $v0_k=>$v0_v){
+                            //convert "true" =>true,"false"=>false
+                            if($v0_v==="true"){
+                                $v0[$v0_k] = true;
+                            }elseif($v0_v==="false"){
+                                $v0[$v0_k] = false;
+                            }
+
+                            if(isset($t_value_i[$k0][$v0_k])){
+                                if($t_value_i[$k0][$v0_k]==""){
+                                    if(isset($acl_grp[$t_key_0][$k0][$v0_k])){
+                                        $v0[$v0_k] = $acl_grp[$t_key_0][$k0][$v0_k];
+                                    }else{
+                                        //$v0[$v0_k] = false;
+                                    }
+
+                                }
+
+                            }else{
+                                //$v0[$v0_k] = false;
+                            }
+                        }
+                        $t_value_0[$k0] = $v0;
+                    }
+                }elseif(count($t_value_0) == 0 && count($t_value_i)>0){
+                    //$t_value_0 = $t_value_i;
+                }
+            }else{
                 foreach($t_value_0 as $k0=>$v0){
-                    //print_r($k0);echo "=";
-                    //print_r($t_value_i[$k0]);echo "-----";
                     foreach($v0 as $v0_k=>$v0_v){
+                        //convert "true" =>true,"false"=>false
                         if($v0_v==="true"){
                             $v0[$v0_k] = true;
                         }elseif($v0_v==="false"){
                             $v0[$v0_k] = false;
                         }
-                        if(isset($t_value_i[$k0][$v0_k])){
-                            if($t_value_i[$k0][$v0_k]==""){
-                                if(isset($acl_grp[$t_key_0][$k0][$v0_k])){
-                                    $v0[$v0_k] = $acl_grp[$t_key_0][$k0][$v0_k];
-                                }else{
-                                    $v0[$v0_k] = false;
-                                }
-
-                            }
-
-                        }
                     }
+
                     $t_value_0[$k0] = $v0;
                 }
-            }elseif(count($t_value_0) == 0 && count($t_value_i)>0){
-                $t_value_0 = $t_value_i;
+                ///
             }
 
             $acl[$t_key_0] =$t_value_0;
-
         }
 
         //print_r($acl); die();
@@ -431,24 +458,32 @@ class ACL extends Common{
     }
 
     //----------------------------------------------------------
-    public function groups($g_id=null,$limit=null,$offset=null,$g_name=null,$member=null){
-        $query = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
-
-        $query_count = "select * from groups where g_name <> 'super_admin' and g_name <> 'user_default'";
+    public function groups($g_id=null,$limit=null,$offset=null,$g_name=null,$member=null,$all=null){
+        if($all==1){
+            $query = "select * from groups";
+            $query_count = "select * from groups";
+            $where =" where";
+        }else{
+            $query = "select * from groups where g_name <> 'super_admin_default' and g_name <> 'user_default'";
+            $query_count = "select * from groups where g_name <> 'super_admin_default' and g_name <> 'user_default'";
+            $where=" and";
+        }
 
         if($g_name !=''){
-            $query .= " and g_name like '%{$g_name}%'";
-            $query_count .= " and g_name like '%{$g_name}%'";
+            $query .= $where." g_name like '%{$g_name}%'";
+            $query_count .= $where." g_name like '%{$g_name}%'";
+            $where=" and";
         }
 
         if($member !=''){
-            $query .= " and u_name like '%{$member}%'";
-            $query_count .= " and u_name like '%{$member}%'";
+            $query .= $where." u_name like '%{$member}%'";
+            $query_count .=$where. " u_name like '%{$member}%'";
+            $where=" and";
         }
 
         if($g_id !=''){
-            $query .= " and g_id = '{$g_id}'";
-            $query_count .= " and g_id = '{$g_id}'";
+            $query .= $where." g_id = '{$g_id}'";
+            $query_count .= $where." g_id = '{$g_id}'";
         }
 
         $query .= " order by g_id DESC";
@@ -477,6 +512,96 @@ class ACL extends Common{
    }
 
     //----------------------------------------------------------
+    public function getGrp_gID($g_id){
+        $query = "select * from groups where g_id = '{$g_id}'";
+        $result = mysqli_query($this->con,$query);
+
+        $list = array();
+        $acl_update = array();
+        if($result){
+            while ($row = mysqli_fetch_assoc($result)) {
+                $row['acl'] = json_decode($row['acl'],true);
+                $acl_update = $row['acl'];
+                $list[] = $row;
+            }
+        }
+
+        if(count($acl_update)>0){
+            $new_acl = $this->acl_default();
+            //print_r($new_acl);die();
+            //merge or delete field
+            $diff = array_diff_key($new_acl,$acl_update);
+            if(count($diff) >0) {
+                $acl_update = array_merge($acl_update,$diff);
+            }
+            //delete
+            $diff = array_diff_key($acl_update,$new_acl);
+            if(count($diff) >0) {
+                foreach($diff as $k=>$v){
+                    unset($acl_update[$k]);
+                }
+            }
+
+            $acl = array();
+
+            foreach ($acl_update as $t_key_0=>$t_value_0){
+                //print_r($t_key_0."---------");
+                $t_value_i = $new_acl[$t_key_0];
+                if(count($t_value_0)>0 && count($t_value_i)>0){
+                    //find  key in a1 differently a2
+                    $diff = array_diff_key($t_value_i,$t_value_0);
+                    if(count($diff) >0) {
+                        $t_value_0 = array_merge($t_value_0,$diff);
+                    }
+                    //find  key in a2 differently a1
+                    $diff = array_diff_key($t_value_0,$t_value_i);
+                    if(count($diff) >0) {
+                        foreach($diff as $k0=>$v0){
+                            unset($t_value_0[$k0]);
+                        }
+                    }
+
+                }elseif(count($t_value_0) == 0 && count($t_value_i)>0){
+                    $t_value_0 = $t_value_i;
+                }
+
+                $acl[$t_key_0] =$t_value_0;
+
+            }
+
+            $list[0]['acl'] =$acl;
+        }
+
+
+
+        return array("results"=>$list);
+    }
+
+    //-----------------------------------------------------------
+    public function acl_default(){
+        $table = $this->getFieldsTable();
+        $permission_table=array();
+
+        $data = array();
+        $data['permission']="";
+
+        foreach($table['tables'] as $it){
+            $permission_table[$it] =array("view"=>false,"add"=>false,"edit"=>false);
+            $it_arr = array();
+            foreach($table["table_field"][$it] as $key =>$v){
+                $it_arr[$v] = array("view"=>false,"add"=>false,"edit"=>false);
+            }
+
+            $data[$it]=$it_arr;
+        }
+
+        $data['permission']=$permission_table;
+
+        //print_r($data); die();
+        return $data;
+    }
+
+    //----------------------------------------------------------
     public function deleteGroup_gID($g_id){
         $query ="delete from groups where g_id = '{$g_id}'";
         $delete = mysqli_query($this->con,$query);
@@ -489,8 +614,12 @@ class ACL extends Common{
     }
 
     //----------------------------------------------------------
-    public function groupsByRole($g_role,$g_name=null){
-        $query ="select * from groups where g_role = '{$g_role}' and g_name <> 'super_admin' and g_name <> 'user_default'";
+    public function groupsByRole($g_role,$g_name=null,$all=null){
+        if($all==1){
+            $query ="select * from groups where g_role = '{$g_role}'";
+        }else{
+            $query ="select * from groups where g_role = '{$g_role}' and g_name <> 'super_admin_default' and g_name <> 'user_default'";
+        }
 
         if($g_name !=""){
             $query .= " and g_name like '%{$g_name}%'";

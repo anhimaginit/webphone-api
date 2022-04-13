@@ -19,7 +19,7 @@ foreach ($EXPECTED AS $key) {
 //die();
 //--- validate
 
-$isAuth = true;//$Object->basicAuth($auth);
+$isAuth = $Object->basicAuth($auth);
 
 if(!$isAuth){
     $ret = array('ERROR'=>'Authentication is failed');
