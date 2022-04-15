@@ -135,6 +135,7 @@ class ACL extends Common{
         //print_r($table['tables']); die();
         switch ($g_role){
             case "super_admin":
+                $permission_table['ACL'] =array("view"=>true,"add"=>false,"edit"=>true);
                 foreach($table['tables'] as $it){
                     $permission_table[$it] =array("view"=>true,"add"=>true,"edit"=>true);
                     $it_arr = array();
@@ -147,6 +148,7 @@ class ACL extends Common{
 
                 break;
             case "company_manager":
+                $permission_table['ACL'] =array("view"=>true,"add"=>false,"edit"=>true);
                 foreach($table['tables'] as $it){
                     $permission_table[$it] =array("view"=>true,"add"=>true,"edit"=>true);
                     $it_arr = array();
@@ -158,6 +160,7 @@ class ACL extends Common{
                 }
                 break;
             case "branch_manager":
+                $permission_table['ACL'] =array("view"=>false,"add"=>false,"edit"=>false);
                 foreach($table['tables'] as $it){
                     if($it !="company"){
                         $permission_table[$it] =array("view"=>true,"add"=>true,"edit"=>true);
@@ -180,6 +183,7 @@ class ACL extends Common{
 
                 break;
             default:
+                $permission_table['ACL'] =array("view"=>false,"add"=>false,"edit"=>false);
                 foreach($table['tables'] as $it){
                     if($it !="user"){
                         $permission_table[$it] =array("view"=>true,"add"=>false,"edit"=>false);
@@ -356,30 +360,35 @@ class ACL extends Common{
     }
     //----------------------------------------------------------
     public function updateACL($g_id,$u_id,$acl_update){
-       $rsl = $this->get_ACL($u_id);
-       $acl_permission = $rsl['acl'];
+       //$rsl = $this->get_ACL($u_id);
+       //$acl_permission = $rsl['acl'];
         //groups($g_id,"","","","",1);
-       $rsl =$this->groups($g_id,"","","","",1);
+       //$rsl =$this->groups($g_id,"","","","",1);
         //print_r($rsl); die();
-        $acl_grp =array();
-        if(count($rsl['results']) >0) $acl_grp = $rsl['results'][0]['acl'];
+        //$acl_grp =array();
+        //if(count($rsl['results']) >0) $acl_grp = $rsl['results'][0]['acl'];
 
         //check fields were permited
         $acl = array();
 
         foreach ($acl_update as $t_key_0=>$t_value_0){
-            //print_r($t_key_0."---------");
+            foreach($t_value_0 as $k0=>$v0){
+                foreach($v0 as $v0_k=>$v0_v){
+                    //convert "true" =>true,"false"=>false
+                    if($v0_v==="true"){
+                        $v0[$v0_k] = true;
+                    }elseif($v0_v==="false"){
+                        $v0[$v0_k] = false;
+                    }
+                }
+
+                $t_value_0[$k0] = $v0;
+            }
+            /*
             if(isset($acl_permission[$t_key_0])){
                 $t_value_i = $acl_permission[$t_key_0];
                 if(count($t_value_0)>0 && count($t_value_i)>0){
-                    /*$diff = array_diff_key($t_value_i,$t_value_0);
-                    if(count($diff) >0) {
-                        $t_value_0 = array_merge($t_value_0,$diff);
-                    }*/
-
                     foreach($t_value_0 as $k0=>$v0){
-                        //print_r($k0);echo "=";
-                        //print_r($t_value_i[$k0]);echo "-----";
                         foreach($v0 as $v0_k=>$v0_v){
                             //convert "true" =>true,"false"=>false
                             if($v0_v==="true"){
@@ -422,7 +431,7 @@ class ACL extends Common{
                 }
                 ///
             }
-
+            */
             $acl[$t_key_0] =$t_value_0;
         }
 
@@ -584,7 +593,7 @@ class ACL extends Common{
 
         $data = array();
         $data['permission']="";
-
+        $permission_table['ACL'] =array("view"=>false,"add"=>false,"edit"=>false);
         foreach($table['tables'] as $it){
             $permission_table[$it] =array("view"=>false,"add"=>false,"edit"=>false);
             $it_arr = array();
